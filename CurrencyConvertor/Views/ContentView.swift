@@ -9,6 +9,9 @@ import SwiftUI
 struct ContentView: View {
 	
 	@StateObject private var viewModel = ContentViewModel()
+	@FocusState private var baseAmountIsFocused: Bool
+	@FocusState private var convertedAmountIsFocused: Bool
+	
 	@State private var amount = ""
 	
 	var body: some View {
@@ -27,6 +30,12 @@ struct ContentView: View {
 					.font(.system(size: 15))
 				
 				TextField("", value: $viewModel.baseAmount, formatter: viewModel.numberFormatter)
+					.focused($baseAmountIsFocused)
+					.onSubmit {
+						viewModel.convert()
+						baseAmountIsFocused = false
+						convertedAmountIsFocused = false
+					}
 					.font(.system(size: 18, weight: .semibold))
 					.padding()
 					.overlay {
@@ -46,6 +55,7 @@ struct ContentView: View {
 								ForEach(CurrencyChoice.allCases) { currencyChoice in
 									Button {
 										viewModel.baseCurrency = currencyChoice
+										viewModel.convert()
 									} label: {
 										Text(currencyChoice.fetchMenuName())
 									}
@@ -79,6 +89,7 @@ struct ContentView: View {
 					.font(.system(size: 15))
 				
 				TextField("", value: $viewModel.convertedAmount, formatter: viewModel.numberFormatter)
+					.focused($convertedAmountIsFocused)
 					.font(.system(size: 18, weight: .semibold))
 					.padding()
 					.overlay {
@@ -98,6 +109,7 @@ struct ContentView: View {
 								ForEach(CurrencyChoice.allCases) { currencyChoice in
 									Button {
 										viewModel.convertedCurrency = currencyChoice
+										viewModel.convert()
 									} label: {
 										Text(currencyChoice.fetchMenuName())
 									}
@@ -120,7 +132,7 @@ struct ContentView: View {
 				HStack {
 					Spacer()
 					
-					Text("1.00000 USD = 0.85000 EUR")
+					Text("1.000000 \(viewModel.baseCurrency.rawValue) = \(viewModel.conversionRate) \(viewModel.convertedCurrency.rawValue)")
 						.font(.system(size: 18, weight: .semibold))
 						.padding(.top, 25)
 					
@@ -141,6 +153,11 @@ struct ContentView: View {
 						.tint(.white)
 				}
 			}
+		}
+		.onTapGesture {
+			viewModel.convert()
+			baseAmountIsFocused = false
+			convertedAmountIsFocused = false
 		}
 	}
 }

@@ -2,11 +2,13 @@
 //  ContentViewModel.swift
 //  CurrencyConvertor
 //
-//  Created by Zoltan Vegh on 15/11/2025.
 //
 
 import Foundation
 
+// conversionRate / baseExchangeRate * baseAmount
+
+@MainActor
 class ContentViewModel: ObservableObject {
 	
 	@Published var convertedAmount = 1.0
@@ -24,8 +26,16 @@ class ContentViewModel: ObservableObject {
 		return numberFormatter
 	}
 	
+	var conversionRate: Double {
+		if let rates,
+		   let baseExchangeRate = rates.rates[baseCurrency.rawValue],
+		   let convertedExchangeRate = rates.rates[convertedCurrency.rawValue] {
+			return convertedExchangeRate / baseExchangeRate
+		}
+		return 1.0
+	}
+	
 	func fetchRates() async {
-
 		guard let url = URL(string: "https://openexchangerates.org/api/latest.json?app_id=\(OpenExchangeRates.appId)") else {
 			errorMessage = "Could not fetch rates."
 			print("API url is not valid")
@@ -42,6 +52,14 @@ class ContentViewModel: ObservableObject {
 			print(error.localizedDescription)
 		}
 		isLoading = false
+	}
+	
+	func convert() {
+		if let rates,
+		   let baseExchangeRate = rates.rates[baseCurrency.rawValue],
+		   let convertedExchangeRate = rates.rates[convertedCurrency.rawValue] {
+			convertedAmount = (convertedExchangeRate / baseExchangeRate) * baseAmount
+		}
 	}
 	
 }
